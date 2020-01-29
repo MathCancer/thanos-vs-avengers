@@ -69,7 +69,7 @@
 
 // declare cell definitions here 
 
-Cell_Definition motile_cell; 
+Cell_Definition civilian; 
 
 void create_cell_types( void )
 {
@@ -92,11 +92,11 @@ void create_cell_types( void )
 	
 	// set default cell cycle model 
 
-	cell_defaults.functions.cycle_model = flow_cytometry_separated_cycle_model; 
+	cell_defaults.functions.cycle_model = live; 
 	
 	// set default_cell_functions; 
 	
-	cell_defaults.functions.update_phenotype = update_cell_and_death_parameters_O2_based; 
+	cell_defaults.functions.update_phenotype = NULL; 
 	
 	// needed for a 2-D simulation: 
 	
@@ -130,38 +130,38 @@ void create_cell_types( void )
 	cell_defaults.phenotype.secretion.saturation_densities[oxygen_substrate_index] = 38; 
 	
 	// add custom data here, if any 
+		
 	
-
 	// Now, let's define another cell type. 
 	// It's best to just copy the default and modify it. 
 	
 	// make this cell type randomly motile, less adhesive, greater survival, 
 	// and less proliferative 
 	
-	motile_cell = cell_defaults; 
-	motile_cell.type = 1; 
-	motile_cell.name = "motile tumor cell"; 
+	civilian = cell_defaults; 
+	civilian.type = 1; 
+	civilian.name = "civilian"; 
 	
 	// make sure the new cell type has its own reference phenotype
 	
-	motile_cell.parameters.pReference_live_phenotype = &( motile_cell.phenotype ); 
+	civilian.parameters.pReference_live_phenotype = &( civilian.phenotype ); 
 	
 	// enable random motility 
-	motile_cell.phenotype.motility.is_motile = true; 
-	motile_cell.phenotype.motility.persistence_time = parameters.doubles( "motile_cell_persistence_time" ); // 15.0; 
-	motile_cell.phenotype.motility.migration_speed = parameters.doubles( "motile_cell_migration_speed" ); // 0.25 micron/minute 
-	motile_cell.phenotype.motility.migration_bias = 0.0;// completely random 
+	civilian.phenotype.motility.is_motile = true; 
+	civilian.phenotype.motility.persistence_time = 1.0; 
+	civilian.phenotype.motility.migration_speed = parameters.doubles( "civilian_speed" ); // 0.25 micron/minute 
+	civilian.phenotype.motility.migration_bias = 0.0;// completely random 
+	
+	// set birth rate
+	civilian.phenotype.cycle.data.transition_rate(0,0) = 
+		parameters.doubles( "civilian_birth_rate" ); // 0.0; 
+	
+	// set death rate 
+	civilian.phenotype.death.rates[apoptosis_model_index] = 
+		parameters.doubles( "civilian_death_rate" ); // 0.0; 
 	
 	// Set cell-cell adhesion to 5% of other cells 
-	motile_cell.phenotype.mechanics.cell_cell_adhesion_strength *= parameters.doubles( "motile_cell_relative_adhesion" ); // 0.05; 
-	
-	// Set apoptosis to zero 
-	motile_cell.phenotype.death.rates[apoptosis_model_index] = parameters.doubles( "motile_cell_apoptosis_rate" ); // 0.0; 
-	
-	// Set proliferation to 10% of other cells. 
-	// Alter the transition rate from G0G1 state to S state
-	motile_cell.phenotype.cycle.data.transition_rate(G0G1_index,S_index) *= 
-		parameters.doubles( "motile_cell_relative_cycle_entry_rate" ); // 0.1; 
+	civilian.phenotype.mechanics.cell_cell_adhesion_strength = 0;
 	
 	return; 
 }
@@ -215,21 +215,21 @@ void setup_tissue( void )
 	// create some cells near the origin
 	
 	Cell* pC;
+	
+	int number_of_civilians = parameters.ints( "civilian_initial_count" ); 
+	for( int n = 0; n < number_of_civilians ; n++ )
+	{
+		std::vector<double> position = {0,0,0}; 
 
-	pC = create_cell(); 
-	pC->assign_position( 0.0, 0.0, 0.0 );
+		double x = -900 + 1800*UniformRandom(); 
+		double y = -900 + 1800*UniformRandom(); 
+		position[0] = x;
+		position[1] = y; 
+		
+		pC = create_cell( civilian ); 
+		pC->assign_position( position );
+	}
 
-	pC = create_cell(); 
-	pC->assign_position( -100, 0, 0.0 );
-	
-	pC = create_cell(); 
-	pC->assign_position( 0, 100, 0.0 );
-	
-	// now create a motile cell 
-	
-	pC = create_cell( motile_cell ); 
-	pC->assign_position( 15.0, -18.0, 0.0 );
-	
 	return; 
 }
 
@@ -245,23 +245,11 @@ std::vector<std::string> my_coloring_function( Cell* pCell )
 		 output[2] = "black"; 
 	}
 	
+	if( pCell->type == civilian.type )
+	{
+		 output[0] = "limegreen"; 
+		 output[2] = "limegreen"; 
+	}
+	
 	return output; 
 }
-
-void civilian_phenotype(Cell* pCell,Phenotype* ph, double dt )
-{
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-}
-
-

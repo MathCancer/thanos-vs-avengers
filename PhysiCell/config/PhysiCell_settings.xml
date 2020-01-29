@@ -87,7 +87,7 @@
 	</domain>
 	
 	<overall>
-		<max_time units="min">7200</max_time> <!-- 5 days * 24 h * 60 min -->
+		<max_time units="min">1440</max_time> <!-- 5 days * 24 h * 60 min -->
 		<time_units>min</time_units>
 		<space_units>micron</space_units>
 	
@@ -104,7 +104,7 @@
 		<folder>output</folder> <!-- use . for root --> 
 
 		<full_data>
-			<interval units="min">360</interval>
+			<interval units="min">60</interval>
 			<enable>true</enable>
 		</full_data>
 		
@@ -121,15 +121,15 @@
 	<microenvironment_setup>
 		<variable name="food" units="dimensionless" ID="0">
 			<physical_parameter_set>
-				<diffusion_coefficient units="micron^2/min">0.0</diffusion_coefficient>
-				<decay_rate units="1/min">0</decay_rate>  
+				<diffusion_coefficient units="micron^2/min">100000.0</diffusion_coefficient>
+				<decay_rate units="1/min">0.1</decay_rate>  
 			</physical_parameter_set>
-			<initial_condition units="dimensionless">1</initial_condition>
-			<Dirichlet_boundary_condition units="dimensionless" 								enabled="false">1</Dirichlet_boundary_condition>
+			<initial_condition units="dimensionless">38.0</initial_condition>
+			<Dirichlet_boundary_condition units="dimensionless" enabled="true">1.0</Dirichlet_boundary_condition>
 		</variable>
 		
 		<options>
-			<calculate_gradients>true</calculate_gradients>
+			<calculate_gradients>false</calculate_gradients>
 			<track_internalized_substrates_in_each_agent>false</track_internalized_substrates_in_each_agent>
 			<!-- not yet supported --> 
 			<initial_condition type="matlab" enabled="false">
@@ -145,19 +145,13 @@
 	<user_parameters>
 		<random_seed type="int" units="dimensionless">0</random_seed> 
 		<!-- example parameters from the template --> 
-
-		<civilian_birth type="double" units="1/min" 
-			description="civilian birth rate">6.9e-4</civilian_birth>
-		<civilian_speed type="double" units="micron/min" 
-			description="civilian migration speed">0.01</civilian_speed>
-		<civilian_consumption type="double" units="1/min" 
-			description="rate civilians consume resource">
-			0.025</civilian_consumption> 
-		<civilian_energy_use type="double" units="1/min" 
-			description="rate civilians deplete energy">0.046</civilian_energy_use> 
-		<civilian_death_threshold type="double" units="dimensionless"
-			description="civilians starve below this energy level">
-			0.1</civilian_death_threshold>
+		
+		<!-- civilians --> 
+		<civilian_initial_count type="int">100</civilian_initial_count>
+		<civilian_speed type="double">.1</civilian_speed>
+		<civilian_birth_rate type="double">.0014</civilian_birth_rate>
+		<civilian_death_rate type="double">.000014</civilian_death_rate>
+		
 	</user_parameters>
 	
 </PhysiCell_settings>

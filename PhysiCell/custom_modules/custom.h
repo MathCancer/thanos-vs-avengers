@@ -71,13 +71,13 @@
 using namespace BioFVM; 
 using namespace PhysiCell;
 
+void tumor_cell_phenotype_with_oncoprotein( Cell* pCell, Phenotype& phenotype, double dt ); 
+
 // any additional cell types (beyond cell_defaults)
 
-extern Cell_Definition motile_cell; 
+extern Cell_Definition civilian; 
 
 // custom cell phenotype functions could go here 
-
-void civilian_phenotype(Cell* pCell,Phenotype* ph, double dt );
 
 // setup functions to help us along 
 
