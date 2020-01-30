@@ -70,6 +70,7 @@
 // declare cell definitions here 
 
 Cell_Definition civilian; 
+Cell_Definition Thanos; 
 
 void create_cell_types( void )
 {
@@ -163,6 +164,9 @@ void create_cell_types( void )
 	// Set cell-cell adhesion to 5% of other cells 
 	civilian.phenotype.mechanics.cell_cell_adhesion_strength = 0;
 	
+	
+	Thanos.type = 2; 
+	
 	return; 
 }
 
@@ -252,4 +256,38 @@ std::vector<std::string> my_coloring_function( Cell* pCell )
 	}
 	
 	return output; 
+}
+
+void thanos_snap( void )
+{
+	int number_of_cells = (*all_cells).size(); 
+	for( int n=0; n < number_of_cells ; n++ )
+	{
+		Cell* pC = (*all_cells)[n]; 
+		if( pC->phenotype.death.dead == false )
+		{
+			if( pC->type != Thanos.type )
+			{
+				
+				if( UniformRandom() <= 0.5 )
+				{
+					pC->start_death( 0); 
+					pC->functions.custom_cell_rule = sad_blowing_away; 
+				}
+				
+				
+			}
+			
+		}
+		
+	}
+	
+	
+	return; 
+}
+
+void sad_blowing_away( Cell* pCell, Phenotype& phenotype , double dt )
+{
+	pCell->velocity[0] += 1.0; 
+	return; 
 }

@@ -76,6 +76,7 @@ void tumor_cell_phenotype_with_oncoprotein( Cell* pCell, Phenotype& phenotype, d
 // any additional cell types (beyond cell_defaults)
 
 extern Cell_Definition civilian; 
+extern Cell_Definition Thanos; 
 
 // custom cell phenotype functions could go here 
 
@@ -90,3 +91,7 @@ void setup_microenvironment( void );
 // custom pathology coloring function 
 
 std::vector<std::string> my_coloring_function( Cell* );
+
+void thanos_snap( void ); 
+
+void sad_blowing_away( Cell* pCell, Phenotype& phenotype , double dt );

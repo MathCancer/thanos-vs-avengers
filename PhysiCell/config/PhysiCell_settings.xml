@@ -152,6 +152,9 @@
 		<civilian_birth_rate type="double">.0014</civilian_birth_rate>
 		<civilian_death_rate type="double">.000014</civilian_death_rate>
 		
+		<thanos_snap_time type="double">720</thanos_snap_time>
+		
+		
 	</user_parameters>
 	
 </PhysiCell_settings>
