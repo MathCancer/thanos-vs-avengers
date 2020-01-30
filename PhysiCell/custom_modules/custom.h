@@ -77,6 +77,7 @@ void tumor_cell_phenotype_with_oncoprotein( Cell* pCell, Phenotype& phenotype, d
 
 extern Cell_Definition civilian; 
 extern Cell_Definition Thanos; 
+extern Cell_Definition avenger; 
 
 // custom cell phenotype functions could go here 
 
@@ -95,3 +96,12 @@ std::vector<std::string> my_coloring_function( Cell* );
 void thanos_snap( void ); 
 
 void sad_blowing_away( Cell* pCell, Phenotype& phenotype , double dt );
+
+void cell1_attacks_cell2( Cell* pCell1 , Cell* pCell2 , double dt ); 
+
+void Thanos_function( Cell* pCell, Phenotype& phenotype, double dt ); 
+void avenger_function( Cell* pCell, Phenotype& phenotype, double dt ); 
+
+void avenger_taxis( Cell* pCell , Phenotype& phenotype , double dt );
+void thanos_taxis( Cell* pCell , Phenotype& phenotype , double dt ); 
+

@@ -209,17 +209,6 @@ int main( int argc, char* argv[] )
 			  Custom add-ons could potentially go here. 
 			*/
 			
-			static bool snap_done = false; 
-			if( PhysiCell_globals.current_time >= parameters.doubles( "thanos_snap_time" ) && snap_done == false )
-			{
-				std::cout << std::endl << std::endl << 
-				"======================" << std::endl << 
-				"SNAP! I am inevitable!" << std::endl << 
-				"======================" << std::endl << std::endl;  
-				thanos_snap(); 
-				snap_done = true; 
-			}				
-			
 			PhysiCell_globals.current_time += diffusion_dt;
 		}
 		

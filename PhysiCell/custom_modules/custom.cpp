@@ -71,6 +71,7 @@
 
 Cell_Definition civilian; 
 Cell_Definition Thanos; 
+Cell_Definition avenger;
 
 void create_cell_types( void )
 {
@@ -131,7 +132,13 @@ void create_cell_types( void )
 	cell_defaults.phenotype.secretion.saturation_densities[oxygen_substrate_index] = 38; 
 	
 	// add custom data here, if any 
-		
+	
+	cell_defaults.custom_data.add_variable( "health" , "dimensionless", 1.0 );
+	cell_defaults.custom_data.add_variable( "strength" , "dimensionless", 1.0 );
+	cell_defaults.custom_data.add_variable( "attack_rate" , "1/min" , 1.0 ); 
+	cell_defaults.custom_data.add_variable( "recovery_rate" , "1/min" , 0.01 ); 
+	cell_defaults.custom_data.add_variable( "death_threshold" , "dimensionless" , 0.1 ); 
+	cell_defaults.custom_data.add_variable( "attacking" , "dimensionless" , 0 ); 
 	
 	// Now, let's define another cell type. 
 	// It's best to just copy the default and modify it. 
@@ -165,7 +172,52 @@ void create_cell_types( void )
 	civilian.phenotype.mechanics.cell_cell_adhesion_strength = 0;
 	
 	
+	civilian.custom_data["strength"] = parameters.doubles("civilian_strength" ); 
+	
+	// Thanos setup 
+	
+	Thanos = civilian; 
 	Thanos.type = 2; 
+	Thanos.name = "Thanos"; 
+	
+	Thanos.phenotype.cycle.data.transition_rate(0,0) = 0; 
+	
+	Thanos.phenotype.motility.migration_speed = parameters.doubles("thanos_speed"); 
+	Thanos.phenotype.motility.migration_bias = parameters.doubles("thanos_motility_bias");  
+	Thanos.phenotype.motility.persistence_time = 1; 
+	
+	Thanos.functions.custom_cell_rule = Thanos_function; 
+	Thanos.functions.update_migration_bias = avenger_taxis; 
+	
+	Thanos.custom_data["strength"] = parameters.doubles("thanos_strength" ); 
+	
+	int thanos_sig_i = microenvironment.find_density_index( "thanos" );
+	Thanos.phenotype.secretion.secretion_rates[thanos_sig_i] = 10; 
+	Thanos.phenotype.secretion.saturation_densities[thanos_sig_i] = 1; 
+	
+	// Avenger setup 
+	
+	avenger = Thanos; 
+	avenger.type = 3; 
+	avenger.name = "avenger";
+
+	avenger.phenotype.cycle.data.transition_rate(0,0) = 0; 
+	
+	avenger.phenotype.motility.migration_speed = parameters.doubles("avenger_speed"); 
+	avenger.phenotype.motility.migration_bias = parameters.doubles("avenger_motility_bias"); 
+	avenger.phenotype.motility.persistence_time = 1; 
+	
+	avenger.functions.custom_cell_rule = avenger_function; 
+	avenger.functions.update_migration_bias = thanos_taxis; 	
+
+	avenger.custom_data["strength"] = parameters.doubles( "avenger_strength" ); 
+
+	int avenger_sig_i = microenvironment.find_density_index( "avenger" );
+	avenger.phenotype.secretion.secretion_rates[thanos_sig_i] = 0; 
+	avenger.phenotype.secretion.saturation_densities[thanos_sig_i] = 1; 
+
+	avenger.phenotype.secretion.secretion_rates[avenger_sig_i] = 10; 
+	avenger.phenotype.secretion.saturation_densities[avenger_sig_i] = 1; 
 	
 	return; 
 }
@@ -220,19 +272,50 @@ void setup_tissue( void )
 	
 	Cell* pC;
 	
+	// get domain size 
+	int X_nodes = microenvironment.mesh.x_coordinates.size(); 
+	double X_left  = microenvironment.mesh.x_coordinates[0] - microenvironment.mesh.dx / 2.0 ; 
+	double X_right = microenvironment.mesh.x_coordinates[X_nodes-1] + microenvironment.mesh.dx / 2.0 ; 
+	double X_length = X_right - X_left; 
+	
+	int Y_nodes = microenvironment.mesh.y_coordinates.size(); 
+	double Y_left  = microenvironment.mesh.y_coordinates[0] - microenvironment.mesh.dy / 2.0 ; 
+	double Y_right = microenvironment.mesh.y_coordinates[Y_nodes-1] + microenvironment.mesh.dy / 2.0 ; 
+	double Y_length = Y_right - Y_left; 
+	
 	int number_of_civilians = parameters.ints( "civilian_initial_count" ); 
 	for( int n = 0; n < number_of_civilians ; n++ )
 	{
 		std::vector<double> position = {0,0,0}; 
 
-		double x = -900 + 1800*UniformRandom(); 
-		double y = -900 + 1800*UniformRandom(); 
+		double x = X_left + 0.1*X_length + 0.8*X_length*UniformRandom(); 
+		double y = Y_left + 0.1*Y_length + 0.8*Y_length*UniformRandom(); 
 		position[0] = x;
 		position[1] = y; 
 		
 		pC = create_cell( civilian ); 
 		pC->assign_position( position );
 	}
+	
+	// seed avengers 
+	
+	int number_of_avengers = parameters.ints( "avenger_initial_count" ); 
+	for( int n = 0; n < number_of_avengers ; n++ )
+	{
+		std::vector<double> position = {0,0,0}; 
+
+		double x = X_left + 0.1*X_length + 0.8*X_length*UniformRandom(); 
+		double y = Y_left + 0.1*Y_length + 0.8*Y_length*UniformRandom(); 
+		position[0] = x;
+		position[1] = y; 
+		
+		pC = create_cell( avenger ); 
+		pC->assign_position( position );
+	}
+	
+	pC = create_cell( Thanos ); 
+	std::vector<double> position = {0,0,0}; 
+	pC->assign_position( position ); 
 
 	return; 
 }
@@ -249,9 +332,41 @@ std::vector<std::string> my_coloring_function( Cell* pCell )
 	// Civilian cells are green 
 	if( pCell->type == civilian.type )
 	{
-		 output[0] = "limegreen"; 
-		 output[2] = "limegreen"; 
+		output[0] = "limegreen"; 
+		output[2] = "limegreen"; 
+		output[3] = "limegreen"; 
+		return output; 
 	}
+	
+	// Thanos is purple 
+	if( pCell->type == Thanos.type )
+	{
+		std::string color = "mediumpurple"; 
+		
+		if( pCell->custom_data["attacking"] > 0.5 )
+		{ color = "lavender"; }
+
+		output[0] = color;  
+		output[2] = color; 
+		output[3] = color; 
+		return output; 
+	}	
+	
+	// avengers are red 
+	if( pCell->type == avenger.type )
+	{
+		std::string color = "red"; 
+
+		if( pCell->custom_data["attacking"] > 0.5 )
+		{ color = "mistyrose"; }
+
+		output[0] = color;  
+		output[2] = color; 
+		output[3] = color; 
+		return output; 
+	}	
+	
+	
 	
 	return output; 
 }
@@ -288,3 +403,140 @@ void sad_blowing_away( Cell* pCell, Phenotype& phenotype , double dt )
 	pCell->velocity[0] += 1.0; 
 	return; 
 }
+
+void cell1_attacks_cell2( Cell* pCell1 , Cell* pCell2 , double dt )
+{
+	if( pCell1 == pCell2 )
+	{ return; } 
+	
+	#pragma omp critical 
+	{
+		std::cout << pCell1->type_name << " attacks " << pCell2->type_name << " ... " << std::endl; 
+	
+		// force of battle by pCell1 and pCell2 
+		double force1 = pCell1->custom_data["health"] * pCell1->custom_data["strength"]; 
+		double force2 = pCell2->custom_data["health"] * pCell2->custom_data["strength"]; 
+		double force = force1+force2; 
+		
+		// distribution of the force (damage) on pCell1 and pCell2 
+		double rel_damage1 = force2 / force; 
+		double rel_damage2 = force1 / force; 
+		
+		// mess up the health 
+		// implicit scheme 
+		// dH/dt = -r_attack * rel_damage * H ;  
+		
+		double r_A = pCell1->custom_data["attack_rate"]; 
+		double r_heal1 = pCell1->custom_data["recovery_rate"]; 
+		double r_heal2 = pCell2->custom_data["recovery_rate"]; 
+		
+		pCell1->custom_data["health"] /= (1.0 + dt*r_A*rel_damage1); 
+		pCell2->custom_data["health"] /= (1.0 + dt*r_A*rel_damage2); 
+		
+		// if Cell1 is too damaged, kill it off 
+		
+		if( pCell1->custom_data["health"] < pCell1->custom_data["death_threshold"] )
+		{
+			std::cout << "\t" << pCell1->type_name << " died in battle " << std::endl; 
+			
+			pCell1->start_death( 0 ); 
+			pCell1->functions.custom_cell_rule = NULL; 
+			pCell1->functions.update_phenotype = NULL; 
+		}
+		
+		// if Cell2 is too damaged, kill it off 
+		
+		if( pCell2->custom_data["health"] < pCell2->custom_data["death_threshold"] )
+		{
+			std::cout << "\t" << pCell2->type_name << " died in battle " << std::endl; 
+			
+			pCell2->start_death( 0 ); 
+			pCell2->functions.custom_cell_rule = NULL; 
+			pCell2->functions.update_phenotype = NULL; 
+		}
+		
+	}
+	return; 
+}
+
+void Thanos_function( Cell* pCell, Phenotype& phenotype, double dt )
+{
+	// am I dead? 
+	if( phenotype.death.dead == true )
+	{
+		pCell->functions.custom_cell_rule = NULL; 
+		return; 
+	}
+	
+	// try the snap 
+	static bool snap_done = false; 
+	if( PhysiCell_globals.current_time >= parameters.doubles( "thanos_snap_time" ) && snap_done == false )
+	{
+		std::cout << std::endl << std::endl << 
+		"======================" << std::endl << 
+		"SNAP! I am inevitable!" << std::endl << 
+		"======================" << std::endl << std::endl;  
+		thanos_snap(); 
+		snap_done = true; 
+	}				
+	
+	// look for nearby things to attack 
+	Cell* pC; 
+	for( int n =0 ; n < pCell->cells_in_my_container().size() ; n++ )
+	{
+		pC= pCell->cells_in_my_container()[n];
+		pCell->custom_data["attacking"] = 0; 
+		if( pC!= pCell && pC->phenotype.death.dead == false ) 
+		{
+			cell1_attacks_cell2( pCell , pC, dt ); 
+			pCell->custom_data["attacking"] = 1; 			
+		}
+	}
+	
+	return; 
+};
+
+void avenger_function( Cell* pCell, Phenotype& phenotype, double dt )
+{
+	// try the snap 
+	
+	
+	// look for nearby things to attack
+	// only attack Thanos 
+	
+	Cell* pC; 
+	for( int n =0 ; n < pCell->cells_in_my_container().size() ; n++ )
+	{
+		pCell->custom_data["attacking"] = 0; 
+		pC= pCell->cells_in_my_container()[n];
+		if( pC!= pCell && pC->phenotype.death.dead == false && pC->type == Thanos.type ) 
+		{
+			cell1_attacks_cell2( pCell , pC, dt ); 
+			pCell->custom_data["attacking"] = 1; 
+		}
+	}
+	
+	return; 
+};
+
+
+void avenger_taxis( Cell* pCell , Phenotype& phenotype , double dt )
+{
+	static int avenger_i = microenvironment.find_density_index( "avenger" );
+
+	phenotype.motility.migration_bias_direction = pCell->nearest_gradient(avenger_i); 
+	normalize( &(phenotype.motility.migration_bias_direction) ); 
+
+	return; 
+}
+
+void thanos_taxis( Cell* pCell , Phenotype& phenotype , double dt )
+{
+	static int thanos_i = microenvironment.find_density_index( "thanos" );
+
+	phenotype.motility.migration_bias_direction = pCell->nearest_gradient(thanos_i); 
+	normalize( &(phenotype.motility.migration_bias_direction) ); 
+
+	return; 
+}
+

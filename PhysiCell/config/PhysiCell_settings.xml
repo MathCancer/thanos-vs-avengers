@@ -109,7 +109,7 @@
 		</full_data>
 		
 		<SVG>
-			<interval units="min">60</interval>
+			<interval units="min">20</interval>
 			<enable>true</enable>
 		</SVG>
 		
@@ -125,7 +125,25 @@
 				<decay_rate units="1/min">0.1</decay_rate>  
 			</physical_parameter_set>
 			<initial_condition units="dimensionless">38.0</initial_condition>
-			<Dirichlet_boundary_condition units="dimensionless" enabled="true">1.0</Dirichlet_boundary_condition>
+			<Dirichlet_boundary_condition units="dimensionless" enabled="false">1.0</Dirichlet_boundary_condition>
+		</variable>
+		
+		<variable name="thanos" units="dimensionless" ID="1">
+			<physical_parameter_set>
+				<diffusion_coefficient units="micron^2/min">200000.0</diffusion_coefficient>
+				<decay_rate units="1/min">1</decay_rate>  
+			</physical_parameter_set>
+			<initial_condition units="dimensionless">0.0</initial_condition>
+			<Dirichlet_boundary_condition units="dimensionless" enabled="false">1.0</Dirichlet_boundary_condition>
+		</variable>
+
+		<variable name="avenger" units="dimensionless" ID="2">
+			<physical_parameter_set>
+				<diffusion_coefficient units="micron^2/min">50000.0</diffusion_coefficient>
+				<decay_rate units="1/min">1</decay_rate>  
+			</physical_parameter_set>
+			<initial_condition units="dimensionless">0.0</initial_condition>
+			<Dirichlet_boundary_condition units="dimensionless" enabled="false">1.0</Dirichlet_boundary_condition>
 		</variable>
 
 <!-- 
@@ -155,12 +173,32 @@
 	
 	
 	<cell_setup>
+		
+		<defaults>
+			<cycle name="live" ID="">
+				<transition_rates>
+					<transition_rate from="0" to="0" fixed_duration="false" units="1/min"></transition_rate>
+				</transition_rates>
+			</cycle>
+			<death name="apoptosis" ID="">
+				<rate></rate>
+				<parameters /> 
+			</death> 
+			<death name="apoptosis" ID="">
+				<rate></rate>
+				<parameters /> 
+			</death> 
+		</defaults> 
+	
+		<cycle_defaults>
+		
+		</cycle_defaults>
+	
 		<cell_definitions>
 			<cell_definition name="civilian" ID="0">
 				<phenotype>
 					<cycle>
 						<transition_rates>
-							<transition from="0" to="0" fixed_duration="false" units="1/min"> </transition_rate>
 						</transition_rates> 
 					</cycle>
 					<death></death>
@@ -197,8 +235,19 @@
 		<civilian_speed type="double">.1</civilian_speed>
 		<civilian_birth_rate type="double">.0007</civilian_birth_rate>
 		<civilian_death_rate type="double">.000007</civilian_death_rate>
+		<civilian_strength type="double">0.01</civilian_strength> 
 		
+		<!-- Thanos -->
+		<thanos_speed type="double">1</thanos_speed> 
 		<thanos_snap_time type="double">720</thanos_snap_time>
+		<thanos_strength type="double">1000</thanos_strength>
+		<thanos_motility_bias type="double">1</thanos_motility_bias> 
+		
+		<!-- avengers --> 
+		<avenger_initial_count type="int">20</avenger_initial_count>
+		<avenger_speed type="double">5</avenger_speed>
+		<avenger_strength type="double">10</avenger_strength> 
+		<avenger_motility_bias type="double">0.5</avenger_motility_bias> 
 		
 		
 	</user_parameters>
