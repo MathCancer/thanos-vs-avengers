@@ -239,16 +239,14 @@ void setup_tissue( void )
 
 std::vector<std::string> my_coloring_function( Cell* pCell )
 {
-	// start with flow cytometry coloring 
+	// start off with black 
+	std::vector<std::string> output( 4 , "black" ); 
 	
-	std::vector<std::string> output = false_cell_coloring_cytometry(pCell); 
+	// stay black if dead 
+	if( pCell->phenotype.death.dead == true )
+	{ return output; } 
 		
-	if( pCell->phenotype.death.dead == false && pCell->type == 1 )
-	{
-		 output[0] = "black"; 
-		 output[2] = "black"; 
-	}
-	
+	// Civilian cells are green 
 	if( pCell->type == civilian.type )
 	{
 		 output[0] = "limegreen"; 
@@ -274,7 +272,6 @@ void thanos_snap( void )
 					pC->start_death( 0); 
 					pC->functions.custom_cell_rule = sad_blowing_away; 
 				}
-				
 				
 			}
 			

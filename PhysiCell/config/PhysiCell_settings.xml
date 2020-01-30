@@ -72,7 +72,7 @@
 <user_details />
 -->
 
-<PhysiCell_settings version="devel-version">
+<PhysiCell_settings version="1.6.1">
 	<domain>
 		<x_min>-500</x_min>
 		<x_max>500</x_max>
@@ -127,6 +127,17 @@
 			<initial_condition units="dimensionless">38.0</initial_condition>
 			<Dirichlet_boundary_condition units="dimensionless" enabled="true">1.0</Dirichlet_boundary_condition>
 		</variable>
+
+<!-- 
+		<variable name="scream" units="dimensionless" ID="0">
+			<physical_parameter_set>
+				<diffusion_coefficient units="micron^2/min">100000.0</diffusion_coefficient>
+				<decay_rate units="1/min">0.1</decay_rate>  
+			</physical_parameter_set>
+			<initial_condition units="dimensionless">0</initial_condition>
+			<Dirichlet_boundary_condition units="dimensionless" enabled="false">1.0</Dirichlet_boundary_condition>
+		</variable>
+--> 
 		
 		<options>
 			<calculate_gradients>false</calculate_gradients>
@@ -140,17 +151,52 @@
 				<filename>./config/dirichlet.mat</filename>
 			</dirichlet_nodes>
 		</options>
-	</microenvironment_setup>	
+	</microenvironment_setup>
+	
+	
+	<cell_setup>
+		<cell_definitions>
+			<cell_definition name="civilian" ID="0">
+				<phenotype>
+					<cycle>
+						<transition_rates>
+							<transition from="0" to="0" fixed_duration="false" units="1/min"> </transition_rate>
+						</transition_rates> 
+					</cycle>
+					<death></death>
+					<geometry></geometry> 
+					<volume></volume>
+					<motility></motility>
+					<secretion></secretion>
+					<mechanics></mechanics> 
+				</phenotype>
+			</cell_definition>
+			
+		</cell_definitions>
+	
+		<options>
+			<cycle_model>live</cycle_model>
+			<apoptosis_duration units="min">516</apoptosis_duration>
+		</options> 
+	
+		<custom_data>
+			<damage units="dimensionless">0.0</damage>
+		</custom_data> 
+		
+		<initial_condition>
+		</initial_condition> 
+	
+	</cell_setup>
 	
 	<user_parameters>
 		<random_seed type="int" units="dimensionless">0</random_seed> 
 		<!-- example parameters from the template --> 
 		
 		<!-- civilians --> 
-		<civilian_initial_count type="int">100</civilian_initial_count>
+		<civilian_initial_count type="int">500</civilian_initial_count>
 		<civilian_speed type="double">.1</civilian_speed>
-		<civilian_birth_rate type="double">.0014</civilian_birth_rate>
-		<civilian_death_rate type="double">.000014</civilian_death_rate>
+		<civilian_birth_rate type="double">.0007</civilian_birth_rate>
+		<civilian_death_rate type="double">.000007</civilian_death_rate>
 		
 		<thanos_snap_time type="double">720</thanos_snap_time>
 		
