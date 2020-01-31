@@ -138,7 +138,10 @@ void create_cell_types( void )
 	cell_defaults.custom_data.add_variable( "attack_rate" , "1/min" , 1.0 ); 
 	cell_defaults.custom_data.add_variable( "recovery_rate" , "1/min" , 0.01 ); 
 	cell_defaults.custom_data.add_variable( "death_threshold" , "dimensionless" , 0.1 ); 
+	
 	cell_defaults.custom_data.add_variable( "attacking" , "dimensionless" , 0 ); 
+	
+	cell_defaults.custom_data.add_variable( "infinity_stones" , "dimensionless" , 0 ); 
 	
 	// Now, let's define another cell type. 
 	// It's best to just copy the default and modify it. 
@@ -218,6 +221,10 @@ void create_cell_types( void )
 
 	avenger.phenotype.secretion.secretion_rates[avenger_sig_i] = 10; 
 	avenger.phenotype.secretion.saturation_densities[avenger_sig_i] = 1; 
+
+	// Thanos is a big guy 
+	Thanos.phenotype.volume.multiply_by_ratio( 4.0 ); 
+	avenger.phenotype.volume.multiply_by_ratio( 2.0 ); 
 	
 	return; 
 }
@@ -295,6 +302,7 @@ void setup_tissue( void )
 		
 		pC = create_cell( civilian ); 
 		pC->assign_position( position );
+		
 	}
 	
 	// seed avengers 
@@ -311,6 +319,15 @@ void setup_tissue( void )
 		
 		pC = create_cell( avenger ); 
 		pC->assign_position( position );
+		
+		// hide the 6 stones
+		// these avengers are less directed towards Thanos 
+		if( n < 6 )
+		{
+			pC->custom_data["infinity_stones"] = 1.0; 
+			pC->phenotype.motility.migration_bias = 
+				parameters.doubles("avenger_motility_bias_with_stone"); 
+		} 
 	}
 	
 	pC = create_cell( Thanos ); 
@@ -349,6 +366,17 @@ std::vector<std::string> my_coloring_function( Cell* pCell )
 		output[0] = color;  
 		output[2] = color; 
 		output[3] = color; 
+		
+		double stones = pCell->custom_data["infinity_stones"]; 
+		
+		std::cout << std::endl << "\tThanos has " << (int) (stones) 
+				  << " infinity stones!" << std::endl << std::endl; 
+		stones /= 6.0; 
+		
+		char stone_color [1024]; 
+		sprintf( stone_color, "rgb(%u,%u,0)",(int)(255.0*stones),(int)(215.0*stones) );
+		output[2] = stone_color; 
+		
 		return output; 
 	}	
 	
@@ -363,6 +391,10 @@ std::vector<std::string> my_coloring_function( Cell* pCell )
 		output[0] = color;  
 		output[2] = color; 
 		output[3] = color; 
+		
+		if( pCell->custom_data["infinity_stones"] > 0.5 )
+		{ output[2] = "gold"; } 
+	
 		return output; 
 	}	
 	
@@ -442,6 +474,11 @@ void cell1_attacks_cell2( Cell* pCell1 , Cell* pCell2 , double dt )
 			pCell1->start_death( 0 ); 
 			pCell1->functions.custom_cell_rule = NULL; 
 			pCell1->functions.update_phenotype = NULL; 
+			
+			// its stones go to #2
+			double stones = pCell1->custom_data["infinity_stones"]; 
+			pCell1->custom_data["infinity_stones"] = 0; 
+			pCell2->custom_data["infinity_stones"] += stones; 			
 		}
 		
 		// if Cell2 is too damaged, kill it off 
@@ -453,6 +490,11 @@ void cell1_attacks_cell2( Cell* pCell1 , Cell* pCell2 , double dt )
 			pCell2->start_death( 0 ); 
 			pCell2->functions.custom_cell_rule = NULL; 
 			pCell2->functions.update_phenotype = NULL; 
+			
+			// its stones go to #1
+			double stones = pCell2->custom_data["infinity_stones"]; 
+			pCell2->custom_data["infinity_stones"] = 0; 
+			pCell1->custom_data["infinity_stones"] += stones; 			
 		}
 		
 	}
@@ -470,7 +512,8 @@ void Thanos_function( Cell* pCell, Phenotype& phenotype, double dt )
 	
 	// try the snap 
 	static bool snap_done = false; 
-	if( PhysiCell_globals.current_time >= parameters.doubles( "thanos_snap_time" ) && snap_done == false )
+//	if( PhysiCell_globals.current_time >= parameters.doubles( "thanos_snap_time" ) && snap_done == false )
+	if( pCell->custom_data["infinity_stones"] > 5.5 && snap_done == false )
 	{
 		std::cout << std::endl << std::endl << 
 		"======================" << std::endl << 
@@ -478,6 +521,11 @@ void Thanos_function( Cell* pCell, Phenotype& phenotype, double dt )
 		"======================" << std::endl << std::endl;  
 		thanos_snap(); 
 		snap_done = true; 
+		
+		// give some time for the cinematic ending 
+		
+		PhysiCell_settings.max_time = 
+			PhysiCell_globals.current_time + 300.0; 
 	}				
 	
 	// look for nearby things to attack 
@@ -491,6 +539,7 @@ void Thanos_function( Cell* pCell, Phenotype& phenotype, double dt )
 			cell1_attacks_cell2( pCell , pC, dt ); 
 			pCell->custom_data["attacking"] = 1; 			
 		}
+		
 	}
 	
 	return; 
